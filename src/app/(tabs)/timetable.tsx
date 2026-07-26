@@ -13,6 +13,8 @@ import {
 import { Alert } from "react-native";
 import { useRouter } from "expo-router";
 
+import { useTimetable } from "../../context/TimetableContext.tsx";
+
 // ---- Mock data — replace with your real timetable data source ----
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -26,95 +28,19 @@ interface TimetableEntry {
   isNow?: boolean;
 }
 
-
-
-
 export default function TimetableScreen() {
-  const [schedule, setSchedule] = useState<Record<string, TimetableEntry[]>>({
-    Wed: [
-      {
-        id: "1",
-        time: "09:00",
-        period: "AM",
-        name: "Data Structures",
-        room: "Room 302",
-        timeRange: "09:00 - 10:30",
-      },
-      {
-        id: "2",
-        time: "11:00",
-        period: "AM",
-        name: "Operating Systems",
-        room: "Lab 4",
-        timeRange: "11:00 - 12:30",
-        isNow: true,
-      },
-      {
-        id: "3",
-        time: "01:30",
-        period: "PM",
-        name: "Computer Networks",
-        room: "Room 105",
-        timeRange: "13:30 - 15:00",
-      },
-      {
-        id: "4",
-        time: "03:15",
-        period: "PM",
-        name: "Database Management",
-        room: "Room 201",
-        timeRange: "15:15 - 16:45",
-      },
-    ],
-    Tue: [
-      {
-        id: "1",
-        time: "09:00",
-        period: "AM",
-        name: "COA",
-        room: "Room 302",
-        timeRange: "09:00 - 10:30",
-      },
-      {
-        id: "2",
-        time: "11:00",
-        period: "AM",
-        name: "Operating Systems",
-        room: "Lab 4",
-        timeRange: "11:00 - 12:30",
-        isNow: true,
-      },
-      {
-        id: "3",
-        time: "01:30",
-        period: "PM",
-        name: "DBMS",
-        room: "Room 105",
-        timeRange: "13:30 - 15:00",
-      },
-      {
-        id: "4",
-        time: "03:15",
-        period: "PM",
-        name: "MATHS",
-        room: "Room 201",
-        timeRange: "15:15 - 16:45",
-      },
-    ],
-  });
+  // const { schedule, setSchedule } = useTimetable();
+  const { schedule, deleteSubject } = useTimetable();
 
-  const handleAdd = () => {
-    console.warn("Add Subject");
-  };
   const router = useRouter();
 
+  const handleAdd = () => {
+    router.push("/add-subject");
+  };
 
 
   const handleDelete = (id: string) => {
-  Alert.alert(
-    "Delete Subject",
-    "Are you sure?",
-    [
+    Alert.alert("Delete Subject", "Are you sure?", [
       {
         text: "Cancel",
         style: "cancel",
@@ -123,31 +49,23 @@ export default function TimetableScreen() {
         text: "Delete",
         style: "destructive",
         onPress: () => {
-          const updated = {
-            ...schedule,
-            [selectedDay]:
-              schedule[selectedDay].filter(
-                (item) => item.id !== id
-              ),
-          };
-
-          setSchedule(updated);
+          deleteSubject(selectedDay, id);
         },
       },
-    ]
-  );
-};
+    ]);
+  };
 
 
-const handleEdit = (entry: TimetableEntry) => {
-  // router.push({
-  //   pathname: "/edit-subject",
-  //   params: {
-  //     id: entry.id,
-  //   },
-  // });
-  console.warn("edit code")
-};
+
+  const handleEdit = (entry: TimetableEntry) => {
+    // router.push({
+    //   pathname: "/edit-subject",
+    //   params: {
+    //     id: entry.id,
+    //   },
+    // });
+    console.warn("edit code");
+  };
 
   const [selectedDay, setSelectedDay] = useState("Wed");
   const entries = schedule[selectedDay] ?? [];
@@ -171,8 +89,6 @@ const handleEdit = (entry: TimetableEntry) => {
           </Pressable>
         </View>
       </View>
-
-      
 
       {/* Day selector */}
 
@@ -260,28 +176,46 @@ const handleEdit = (entry: TimetableEntry) => {
                   </View>
                 )}
 
+              
+
                 <View style={styles.cardTopRow}>
-                  <Text
-                    style={[
-                      typography.headlineMd,
-                      {
-                        color: colors.primary,
-                        flex: 1,
-                        marginRight: spacing.sm,
-                      },
-                    ]}
-                  >
-                    {entry.name}
-                  </Text>
-                  <View style={styles.timeChip}>
+                  <View style={{ flex: 1 }}>
                     <Text
-                      style={[typography.labelSm, { color: colors.primary }]}
+                      style={[
+                        typography.headlineMd,
+                        {
+                          color: colors.primary,
+                          marginBottom: 6,
+                        },
+                      ]}
                     >
-                      {entry.timeRange}
+                      {entry.name}
                     </Text>
+
+                    <View style={styles.timeChip}>
+                      <Text
+                        style={[typography.labelSm, { color: colors.primary }]}
+                      >
+                        {entry.timeRange}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={{ flexDirection: "row", marginLeft: 10 }}>
+                    <Pressable onPress={() => handleEdit(entry)}>
+                      <MaterialIcons
+                        name="edit"
+                        size={22}
+                        color={colors.primary}
+                        style={{ marginRight: 12 }}
+                      />
+                    </Pressable>
+
+                    <Pressable onPress={() => handleDelete(entry.id)}>
+                      <MaterialIcons name="delete" size={22} color="#ff4d4f" />
+                    </Pressable>
                   </View>
                 </View>
-
                 <View style={styles.roomRow}>
                   <MaterialIcons
                     name="location-on"

@@ -13,37 +13,57 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, typography, spacing, radius, cardShadow } from '../../themes'; // 👈 adjust path to match your project (see note below)
+import { useTimetable } from "../context/TimetableContext.tsx";
 
-// NOTE ON IMPORT PATH: your other screens use '../../../themes' (3 levels up)
-// because they live in src/app/(tabs)/. This file sits directly in
-// src/app/ (NOT inside (tabs)), same level as settings.tsx, so it needs
-// ONE FEWER '../' than your tab screens. If your themes folder is at
-// src/themes, '../../themes' is correct here. Double check against how
-// settings.tsx imports theme in your project and match that.
 
-const TARGET_OPTIONS = [65, 70, 75, 80, 85];
+const C = {
+  background: '#141313',
+  card: '#1c1b1b',
+  cardBorder: '#27272A',
+  divider: '#27272A',
+  primary: '#ffffff',
+  onPrimary: '#2f3131',
+  onSurface: '#e5e2e1',
+  onSurfaceVariant: '#c4c7c8',
+  secondaryText: '#A1A1AA',
+};
 
-export default function AddSubjectScreen() {
-  const router = useRouter();
+const SP = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
+const RADIUS = { DEFAULT: 8, lg: 16, full: 9999 };
 
-  const [name, setName] = useState('');
+export default function AddClassScreen() {
+    const router = useRouter();
+    const { addSubject } = useTimetable();
+
+  const [subject, setSubject] = useState('');
+  const [roomNo, setRoomNo] = useState('');
+  const [time, setTime] = useState('');
   const [professor, setProfessor] = useState('');
-  const [target, setTarget] = useState(75);
 
-  const isValid = name.trim().length > 0;
+  const isValid = subject.trim().length > 0;
 
   const handleSave = () => {
-    if (!isValid) {
-      Alert.alert('Subject name required', 'Please enter a subject name before saving.');
-      return;
-    }
+  if (!isValid) {
+    Alert.alert(
+      "Subject required",
+      "Please enter a subject name before saving."
+    );
+    return;
+  }
 
-    // TODO: wire this to your real data layer (context/AsyncStorage/API), e.g.:
-    // addSubject({ name: name.trim(), professor: professor.trim(), target });
+  addSubject("Wed", {
+    id: Date.now().toString(),
+    name: subject,
+    room: roomNo,
+    time: "09:00",
+    timeRange: time,
+    period: "AM",
+  });
 
-    router.back();
-  };
+  router.back();
+};
+
+  
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -54,12 +74,12 @@ export default function AddSubjectScreen() {
           hitSlop={12}
           style={({ pressed }) => [
             styles.backButton,
-            pressed && { backgroundColor: colors.surfaceVariant },
+            pressed && { backgroundColor: '#2a2a2a' },
           ]}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.onSurfaceVariant} />
+          <MaterialIcons name="arrow-back" size={24} color={C.onSurfaceVariant} />
         </Pressable>
-        <Text style={[typography.headlineLgMobile, styles.headerTitle]}>Add Subject</Text>
+        <Text style={styles.headerTitle}>Add Class</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -72,55 +92,42 @@ export default function AddSubjectScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Subject Details card */}
           <View style={styles.card}>
-            <Text style={styles.label}>Subject Name</Text>
+            <Text style={styles.label}>Subject</Text>
             <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g. Advanced Mathematics"
-              placeholderTextColor={`${colors.secondaryText}80`}
+              value={subject}
+              onChangeText={setSubject}
+              placeholder="e.g. Data St"
+              placeholderTextColor={C.secondaryText}
               style={styles.input}
             />
 
-            <Text style={[styles.label, { marginTop: spacing.md }]}>Professor</Text>
+            <Text style={[styles.label, { marginTop: SP.md }]}>Room No</Text>
+            <TextInput
+              value={roomNo}
+              onChangeText={setRoomNo}
+              placeholder="e.g. Room 302"
+              placeholderTextColor={C.secondaryText}
+              style={styles.input}
+            />
+
+            <Text style={[styles.label, { marginTop: SP.md }]}>Time</Text>
+            <TextInput
+              value={time}
+              onChangeText={setTime}
+              placeholder="e.g. 09:00 AM - 10:30 AM"
+              placeholderTextColor={C.secondaryText}
+              style={styles.input}
+            />
+
+            <Text style={[styles.label, { marginTop: SP.md }]}>Professor</Text>
             <TextInput
               value={professor}
               onChangeText={setProfessor}
-              placeholder="e.g. Dr. Alan Turing"
-              placeholderTextColor={`${colors.secondaryText}80`}
+              placeholder="e.g. Dr.bsdk sir"
+              placeholderTextColor={C.secondaryText}
               style={styles.input}
             />
-          </View>
-
-          {/* Target attendance card */}
-          <View style={styles.card}>
-            <Text style={styles.label}>Target Attendance</Text>
-            <Text style={[typography.bodyMd, { color: colors.secondaryText, marginTop: 2, marginBottom: spacing.md }]}>
-              Minimum attendance you want to maintain
-            </Text>
-
-            <View style={styles.targetRow}>
-              {TARGET_OPTIONS.map((option) => {
-                const active = option === target;
-                return (
-                  <Pressable
-                    key={option}
-                    onPress={() => setTarget(option)}
-                    style={[styles.targetChip, active && styles.targetChipActive]}
-                  >
-                    <Text
-                      style={[
-                        typography.button,
-                        { color: active ? colors.onPrimary : colors.onSurface },
-                      ]}
-                    >
-                      {option}%
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
           </View>
         </ScrollView>
 
@@ -134,7 +141,7 @@ export default function AddSubjectScreen() {
               pressed && isValid && { opacity: 0.85 },
             ]}
           >
-            <Text style={[typography.button, { color: colors.onPrimary }]}>Save Subject</Text>
+            <Text style={styles.saveButtonText}>Save Class</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -145,83 +152,70 @@ export default function AddSubjectScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: C.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     height: 56,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: SP.md,
   },
   backButton: {
-    padding: spacing.sm,
-    borderRadius: radius.full,
+    padding: SP.sm,
+    borderRadius: RADIUS.full,
   },
   headerTitle: {
-    color: colors.primary,
+    fontSize: 20,
     fontWeight: '700',
+    color: C.primary,
   },
   scrollContent: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: SP.md,
+    paddingTop: SP.md,
+    paddingBottom: SP.xl,
   },
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: C.card,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    ...cardShadow,
+    borderColor: C.cardBorder,
+    borderRadius: RADIUS.lg,
+    padding: SP.lg,
+    marginBottom: SP.md,
   },
   label: {
-    fontFamily: typography.bodyMd.fontFamily,
     fontSize: 14,
     fontWeight: '500',
-    color: colors.primary,
+    color: C.primary,
   },
   input: {
-    marginTop: spacing.sm,
+    marginTop: SP.sm,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: radius.DEFAULT,
-    paddingHorizontal: spacing.md,
+    borderColor: C.cardBorder,
+    borderRadius: RADIUS.DEFAULT,
+    paddingHorizontal: SP.md,
     paddingVertical: 12,
-    color: colors.onSurface,
-    fontFamily: typography.bodyLg.fontFamily,
+    color: C.onSurface,
     fontSize: 16,
   },
-  targetRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  targetChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  targetChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
   footer: {
-    padding: spacing.md,
+    padding: SP.md,
     borderTopWidth: 1,
-    borderTopColor: colors.divider,
+    borderTopColor: C.divider,
   },
   saveButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.DEFAULT,
+    backgroundColor: C.primary,
+    borderRadius: RADIUS.DEFAULT,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   saveButtonDisabled: {
     opacity: 0.4,
+  },
+  saveButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: C.onPrimary,
   },
 });
