@@ -1,23 +1,9 @@
-// import React from 'react';
-// import { View, Text, StyleSheet } from 'react-native';
-// import { colors, typography, spacing } from '../../../themes';
-
-// export default function AnalyticsScreen() {
-//   return (
-//     <View style={styles.container}>
-//       <Text style={[typography.headlineLgMobile, { color: colors.primary, padding: spacing.md }]}>Weekly Attendance</Text>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: colors.background } });
-
-
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, typography, spacing, radius, cardShadow } from '../../../themes';
 
 // ---- Mock data — replace with your real analytics data source ----
@@ -39,21 +25,21 @@ const SUBJECT_PERFORMANCE: SubjectPerf[] = [
 
 type DayMark = 'present' | 'bunked' | null;
 
-const MONTH_NAME = 'November 2023';
-const CALENDAR_DAYS = 30;
-const START_WEEKDAY = 3; // Nov 1, 2023 was a Wednesday (0 = Sunday)
-const SELECTED_DATE = 9;
-
-// Mock mark data: date -> status
-const DAY_MARKS: Record<number, DayMark> = {
-  1: 'present',
-  3: 'bunked',
-  5: 'present',
-  9: 'present',
-  12: 'present',
-  15: 'bunked',
-  20: 'present',
-};
+// Mock attendance marks keyed by "YYYY-M-D" — replace with your real
+// attendance data source (e.g. fetch marks for the visible month from your DB/API).
+const MOCK_MARKS: Record<string, DayMark> = {};
+(function seedMockMarks() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = today.getMonth();
+  const pattern: Record<number, DayMark> = {
+    1: 'present', 3: 'bunked', 5: 'present', 9: 'present',
+    12: 'present', 15: 'bunked', 20: 'present',
+  };
+  Object.entries(pattern).forEach(([day, mark]) => {
+    MOCK_MARKS[`${y}-${m}-${day}`] = mark;
+  });
+})();
 
 // ---- Weekly line chart (SVG) ----
 function WeeklyChart() {
@@ -112,10 +98,22 @@ function WeeklyChart() {
   );
 }
 
-function CalendarGrid() {
+// ---- Functional calendar: computes real days/weekday-offset for any month ----
+function CalendarGrid({ monthOffset }: { monthOffset: number }) {
+  const today = new Date();
+  const viewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth(); // 0-11
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startWeekday = new Date(year, month, 1).getDay(); // 0 = Sunday
+
+  const isCurrentMonth = monthOffset === 0;
+  const todayDate = today.getDate();
+
   const cells: (number | null)[] = [
-    ...Array(START_WEEKDAY).fill(null),
-    ...Array.from({ length: CALENDAR_DAYS }, (_, i) => i + 1),
+    ...Array(startWeekday).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
   const weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -132,8 +130,8 @@ function CalendarGrid() {
       <View style={styles.calendarGrid}>
         {cells.map((day, i) => {
           if (day === null) return <View key={i} style={styles.calendarCell} />;
-          const mark = DAY_MARKS[day];
-          const isSelected = day === SELECTED_DATE;
+          const mark = MOCK_MARKS[`${year}-${month}-${day}`];
+          const isSelected = isCurrentMonth && day === todayDate;
           return (
             <View key={i} style={styles.calendarCell}>
               <View style={[styles.dayCircle, isSelected && styles.dayCircleSelected]}>
@@ -178,10 +176,14 @@ function CalendarGrid() {
 
 export default function AnalyticsScreen() {
   const router = useRouter();
-  const [monthOffset, setMonthOffset] = useState(0); // TODO: wire to real month navigation
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const today = new Date();
+  const viewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable hitSlop={10}>
@@ -233,7 +235,7 @@ export default function AnalyticsScreen() {
         {/* Calendar */}
         <View style={styles.card}>
           <View style={styles.cardTopRow}>
-            <Text style={[typography.headlineMd, { color: colors.primary }]}>{MONTH_NAME}</Text>
+            <Text style={[typography.headlineMd, { color: colors.primary }]}>{monthLabel}</Text>
             <View style={styles.monthNav}>
               <Pressable hitSlop={8} onPress={() => setMonthOffset((m) => m - 1)}>
                 <MaterialIcons name="chevron-left" size={20} color={colors.onSurfaceVariant} />
@@ -244,11 +246,11 @@ export default function AnalyticsScreen() {
             </View>
           </View>
           <View style={{ marginTop: spacing.md }}>
-            <CalendarGrid />
+            <CalendarGrid monthOffset={monthOffset} />
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -261,7 +263,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },

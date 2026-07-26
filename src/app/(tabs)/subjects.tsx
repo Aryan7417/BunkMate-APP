@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, typography, spacing, radius, cardShadow } from '../../../themes';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // ---- Mock data — replace with your real subjects data source ----
 interface Subject {
@@ -48,7 +48,8 @@ function SubjectRing({ percent, color, size = 64 }: { percent: number; color: st
   const progress = circumference - (percent / 100) * circumference;
 
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center'  }}>
+    
       <Svg width={size} height={size}>
         <Circle
           cx={size / 2}
@@ -91,7 +92,7 @@ export default function SubjectsScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -155,7 +156,7 @@ export default function SubjectsScreen() {
       <Pressable style={styles.fab} onPress={handleAddSubject}>
         <MaterialIcons name="add" size={24} color={colors.onPrimary} />
       </Pressable>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },
