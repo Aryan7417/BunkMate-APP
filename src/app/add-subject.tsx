@@ -17,6 +17,7 @@ import { useTimetable } from "../context/TimetableContext.tsx";
 
 
 
+
 const C = {
   background: '#141313',
   card: '#1c1b1b',
@@ -31,16 +32,19 @@ const C = {
 
 const SP = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
 const RADIUS = { DEFAULT: 8, lg: 16, full: 9999 };
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function AddClassScreen() {
     const router = useRouter();
-    const { addSubject, updateSubject } = useTimetable();
+    //const { addSubject, updateSubject } = useTimetable();
     const params = useLocalSearchParams();
 
   const [subject, setSubject] = useState('');
   const [roomNo, setRoomNo] = useState('');
   const [time, setTime] = useState('');
   const [professor, setProfessor] = useState('');
+  const [day, setDay] = useState(String(params.day ?? "Mon"));
+  const { schedule, addSubject, updateSubject } = useTimetable();
 
   const isValid = subject.trim().length > 0;
 
@@ -53,9 +57,13 @@ useEffect(() => {
     setRoomNo(String(params.room ?? ""));
     setTime(String(params.time ?? ""));
   }
-}, [params.id]);
+}, []);
 
 const handleSave = () => {
+
+  console.log("Selected Day:", day);
+console.log("Before Save:", schedule);
+
   if (!isValid) {
     Alert.alert(
       "Subject required",
@@ -63,24 +71,32 @@ const handleSave = () => {
     );
     return;
   }
-
-  if (params.id) {
-    updateSubject(String(params.day), {
+  
+if (params.id) {
+    updateSubject(day, {
       id: String(params.id),
       name: subject,
       room: roomNo,
-      time: "09:00",
+      time: "08:45",
       timeRange: time,
       period: "AM",
+      present: 0,
+      absent: 0,
+      target: 75,
     });
+    console.log("Selected Day:", day);
+
   } else {
-    addSubject("Wed", {
+    addSubject(day, {
       id: Date.now().toString(),
       name: subject,
       room: roomNo,
       time: "09:00",
       timeRange: time,
       period: "AM",
+      present: 0,
+      absent: 0,
+      target: 75,
     });
   }
 
@@ -95,6 +111,7 @@ const handleSave = () => {
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}
+
           hitSlop={12}
           style={({ pressed }) => [
             styles.backButton,
@@ -121,7 +138,7 @@ const handleSave = () => {
             <TextInput
               value={subject}
               onChangeText={setSubject}
-              placeholder="e.g. DBMS"
+              placeholder="e.g. "
               placeholderTextColor={C.secondaryText}
               style={styles.input}
             />
@@ -145,6 +162,44 @@ const handleSave = () => {
             />
 
             <Text style={[styles.label, { marginTop: SP.md }]}>Professor</Text>
+
+            <Text style={[styles.label, { marginTop: SP.md }]}>Day</Text>
+
+<View
+  style={{
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 10,
+  }}
+>
+  {DAYS.map((d) => (
+    <Pressable
+      key={d}
+      onPress={() => setDay(d)}
+      style={{
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        marginRight: 8,
+        marginBottom: 8,
+        backgroundColor: day === d ? "#fff" : "#27272A",
+      }}
+    >
+      <Text
+        style={{
+          color: day === d ? "#000" : "#fff",
+          fontWeight: "600",
+        }}
+      >
+        {d}
+      </Text>
+    </Pressable>
+  ))}
+</View>
+
+
+
+
             <TextInput
               value={professor}
               onChangeText={setProfessor}
@@ -158,15 +213,18 @@ const handleSave = () => {
         {/* Save button */}
         <View style={styles.footer}>
           <Pressable
-            onPress={handleSave}
-            style={({ pressed }) => [
-              styles.saveButton,
-              !isValid && styles.saveButtonDisabled,
-              pressed && isValid && { opacity: 0.85 },
-            ]}
-          >
-            <Text style={styles.saveButtonText}>Save Class</Text>
-          </Pressable>
+  onPress={() => {
+    console.warn("Button Clicked");
+    handleSave();
+  }}
+  style={({ pressed }) => [
+    styles.saveButton,
+    !isValid && styles.saveButtonDisabled,
+    pressed && isValid && { opacity: 0.85 },
+  ]}
+>
+  <Text style={styles.saveButtonText}>Save Class</Text>
+</Pressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

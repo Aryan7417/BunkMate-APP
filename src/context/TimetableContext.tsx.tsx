@@ -9,6 +9,11 @@ export interface TimetableEntry {
   time: string;
   timeRange: string;
   period: "AM" | "PM";
+
+  present: number;
+  absent: number;
+  target: number;
+
   isNow?: boolean;
 }
 

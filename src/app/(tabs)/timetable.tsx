@@ -35,8 +35,13 @@ export default function TimetableScreen() {
   const router = useRouter();
 
   const handleAdd = () => {
-    router.push("/add-subject");
-  };
+  router.push({
+    pathname: "/add-subject",
+    params: {
+      day: selectedDay,
+    },
+  });
+};
 
 
   const handleDelete = (id: string) => {
