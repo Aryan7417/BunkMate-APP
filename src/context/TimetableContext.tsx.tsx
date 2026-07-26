@@ -14,16 +14,12 @@ export interface TimetableEntry {
 
 export type ScheduleType = Record<string, TimetableEntry[]>;
 
-// interface TimetableContextType {
-//   schedule: ScheduleType;
-//   setSchedule: React.Dispatch<React.SetStateAction<ScheduleType>>;
-//   addSubject: (day: string, subject: TimetableEntry) => void;
-// }
 interface TimetableContextType {
   schedule: ScheduleType;
   setSchedule: React.Dispatch<React.SetStateAction<ScheduleType>>;
   addSubject: (day: string, subject: TimetableEntry) => void;
   deleteSubject: (day: string, id: string) => void;
+  updateSubject: (day: string, subject: TimetableEntry) => void;
 }
 const TimetableContext = createContext<TimetableContextType | undefined>(
   undefined
@@ -50,6 +46,21 @@ export const TimetableProvider = ({
     }));
   };
 
+ const deleteSubject = (day: string, id: string) => {
+  setSchedule((prev) => ({
+    ...prev,
+    [day]: (prev[day] || []).filter((item) => item.id !== id),
+  }));
+};
+
+const updateSubject = (day: string, updatedSubject: TimetableEntry) => {
+  setSchedule((prev) => ({
+    ...prev,
+    [day]: prev[day].map((item) =>
+      item.id === updatedSubject.id ? updatedSubject : item
+    ),
+  }));
+};
   return (
     <TimetableContext.Provider
   value={{
@@ -57,6 +68,7 @@ export const TimetableProvider = ({
     setSchedule,
     addSubject,
     deleteSubject,
+    updateSubject
   }}
 >
       {children}

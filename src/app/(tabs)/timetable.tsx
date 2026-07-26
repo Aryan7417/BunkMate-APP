@@ -57,15 +57,18 @@ export default function TimetableScreen() {
 
 
 
-  const handleEdit = (entry: TimetableEntry) => {
-    // router.push({
-    //   pathname: "/edit-subject",
-    //   params: {
-    //     id: entry.id,
-    //   },
-    // });
-    console.warn("edit code");
-  };
+const handleEdit = (entry: TimetableEntry) => {
+  router.push({
+    pathname: "/add-subject",
+    params: {
+      id: entry.id,
+      name: entry.name,
+      room: entry.room,
+      time: entry.timeRange,
+      day: selectedDay,
+    },
+  });
+};
 
   const [selectedDay, setSelectedDay] = useState("Wed");
   const entries = schedule[selectedDay] ?? [];

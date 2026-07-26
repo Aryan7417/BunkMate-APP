@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,11 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter ,useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTimetable } from "../context/TimetableContext.tsx";
+
 
 
 const C = {
@@ -33,7 +34,8 @@ const RADIUS = { DEFAULT: 8, lg: 16, full: 9999 };
 
 export default function AddClassScreen() {
     const router = useRouter();
-    const { addSubject } = useTimetable();
+    const { addSubject, updateSubject } = useTimetable();
+    const params = useLocalSearchParams();
 
   const [subject, setSubject] = useState('');
   const [roomNo, setRoomNo] = useState('');
@@ -42,7 +44,18 @@ export default function AddClassScreen() {
 
   const isValid = subject.trim().length > 0;
 
-  const handleSave = () => {
+
+
+
+useEffect(() => {
+  if (params.id) {
+    setSubject(String(params.name ?? ""));
+    setRoomNo(String(params.room ?? ""));
+    setTime(String(params.time ?? ""));
+  }
+}, [params.id]);
+
+const handleSave = () => {
   if (!isValid) {
     Alert.alert(
       "Subject required",
@@ -51,14 +64,25 @@ export default function AddClassScreen() {
     return;
   }
 
-  addSubject("Wed", {
-    id: Date.now().toString(),
-    name: subject,
-    room: roomNo,
-    time: "09:00",
-    timeRange: time,
-    period: "AM",
-  });
+  if (params.id) {
+    updateSubject(String(params.day), {
+      id: String(params.id),
+      name: subject,
+      room: roomNo,
+      time: "09:00",
+      timeRange: time,
+      period: "AM",
+    });
+  } else {
+    addSubject("Wed", {
+      id: Date.now().toString(),
+      name: subject,
+      room: roomNo,
+      time: "09:00",
+      timeRange: time,
+      period: "AM",
+    });
+  }
 
   router.back();
 };
@@ -97,7 +121,7 @@ export default function AddClassScreen() {
             <TextInput
               value={subject}
               onChangeText={setSubject}
-              placeholder="e.g. Data St"
+              placeholder="e.g. DBMS"
               placeholderTextColor={C.secondaryText}
               style={styles.input}
             />
