@@ -231,8 +231,76 @@ export default function SubjectsScreen() {
 
 
               </View>
-
               <View style={styles.cardBottomRow}>
+                <View
+                  style={[styles.statusPill, { borderColor: status.color }]}
+                >
+                  <MaterialIcons
+                    name={status.icon}
+                    size={14}
+                    color={status.color}
+                  />
+                  <Text
+                    style={[
+                      typography.labelSm,
+                      { color: status.color, marginLeft: 4 },
+                    ]}
+                  >
+                    {isSafe ? `${status.label} (${bunkCount})` : status.label}
+                  </Text>
+                </View>
+
+                <Text
+                  style={[
+                    typography.labelSm,
+                    { color: colors.secondaryText },
+                  ]}
+                >
+                  Target: {subject.target}%
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginTop: 15,
+                }}
+              >
+                <Pressable
+                  onPress={() => markPresent(subject.id)}
+                  style={{
+                    flex: 1,
+                    backgroundColor: "#22C55E",
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    alignItems: "center",
+                    marginRight: 8,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "600" }}>
+                    Present
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => markAbsent(subject.id)}
+                  style={{
+                    flex: 1,
+                    backgroundColor: "#EF4444",
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    alignItems: "center",
+                    marginLeft: 8,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "600" }}>
+                    Absent
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* <View style={styles.cardBottomRow}>
 
                 <Text
                   style={[typography.labelSm, { color: colors.secondaryText }]}
@@ -297,7 +365,7 @@ export default function SubjectsScreen() {
                 >
                   Target: {subject.target}%
                 </Text>
-              </View>
+              </View> */}
             </View>
           );
         })}
