@@ -22,40 +22,8 @@ interface Subject {
   target: number;
 }
 
-const INITIAL_SUBJECTS: Subject[] = [
-  {
-    id: "1",
-    name: "Advanced Mathematics",
-    professor: "Dr. Alan Turing",
-    percent: 65,
-    target: 75,
-  },
-  {
-    id: "2",
-    name: "Quantum Physics",
-    professor: "Prof. R. Feynman",
-    percent: 88,
-    target: 75,
-  },
-  {
-    id: "3",
-    name: "Data Structures",
-    professor: "Mrs. Lovelace",
-    percent: 76,
-    target: 75,
-  },
-  {
-    id: "4",
-    name: "DBMS",
-    professor: "Mrs. Lovelace",
-    percent: 90,
-    target: 75,
-  },
-];
 
-// Functional colors only — per DESIGN.md ("color used exclusively for
-// functional feedback"). These three are the only non-monochrome colors
-// in the whole app, used strictly for attendance status.
+
 const STATUS = {
   critical: { color: "#EF4444", label: "Critical", icon: "warning" as const },
   borderline: { color: "#F59E0B", label: "Borderline", icon: "info" as const },
@@ -73,7 +41,7 @@ function getStatus(percent: number, target: number) {
 }
 
 function safeToBunkCount(percent: number, target: number) {
-  // Rough placeholder formula — replace with your real attendance math.
+
   return Math.max(0, Math.floor((percent - target) / 4));
 }
 
@@ -89,7 +57,10 @@ function SubjectRing({
   const strokeWidth = 6;
   const r = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * r;
-  const progress = circumference - (percent / 100) * circumference;
+  const progress =
+    percent >= 100
+      ? 0
+      : circumference - (percent / 100) * circumference;
 
   return (
     <View
@@ -139,12 +110,21 @@ function SubjectRing({
 export default function SubjectsScreen() {
   const router = useRouter();
   //const [subjects] = useState<Subject[]>(INITIAL_SUBJECTS);
-  const { schedule } = useTimetable();
+  // const { schedule } = useTimetable();
+
+  const { schedule, markPresent, markAbsent } = useTimetable();
   const subjects = Object.values(schedule).flat();
 
   const handleAddSubject = () => {
     router.push("/add-subject");
   };
+
+
+
+
+
+
+
 
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
@@ -184,9 +164,19 @@ export default function SubjectsScreen() {
         </Text>
 
         {subjects.map((subject) => {
-          const status = STATUS.safe;
-          const bunkCount = 0;
-          const isSafe = true;
+
+          const total = subject.present + subject.absent;
+
+          const percent =
+            total === 0
+              ? 100
+              : Math.round((subject.present / total) * 100);
+
+          const status = getStatus(percent, subject.target);
+
+          const bunkCount = safeToBunkCount(percent, subject.target);
+
+          const isSafe = percent >= subject.target;
 
           return (
             <View key={subject.id} style={styles.card}>
@@ -213,10 +203,78 @@ export default function SubjectsScreen() {
                     </Text>
                   </View>
                 </View>
-                <SubjectRing percent={100} color={STATUS.safe.color} />
+                <SubjectRing
+                  percent={percent}
+                  color={status.color}
+                />
+
+
+                <View style={{ marginTop: 30, }}>
+                  <Text
+                    style={[
+                      typography.bodyMd,
+                      { color: colors.secondaryText }
+                    ]}
+                  >
+                    Present : {subject.present}
+                  </Text>
+
+                  <Text
+                    style={[
+                      typography.bodyMd,
+                      { color: colors.secondaryText }
+                    ]}
+                  >
+                    Absent : {subject.absent}
+                  </Text>
+                </View>
+
+
               </View>
 
               <View style={styles.cardBottomRow}>
+
+                <Text
+                  style={[typography.labelSm, { color: colors.secondaryText }]}
+                >
+                  Target: {subject.target}%
+                </Text>
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginTop: 15,
+                  }}
+                >
+                  <Pressable
+                    onPress={() => markPresent(subject.id)}
+                    style={{
+                      backgroundColor: "#22C55E",
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "600" }}>
+                      Present
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => markAbsent(subject.id)}
+                    style={{
+                      backgroundColor: "#EF4444",
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "600" }}>
+                      Absent
+                    </Text>
+                  </Pressable>
+                </View>
                 <View
                   style={[styles.statusPill, { borderColor: status.color }]}
                 >
@@ -237,7 +295,7 @@ export default function SubjectsScreen() {
                 <Text
                   style={[typography.labelSm, { color: colors.secondaryText }]}
                 >
-                  Target: 75%
+                  Target: {subject.target}%
                 </Text>
               </View>
             </View>
