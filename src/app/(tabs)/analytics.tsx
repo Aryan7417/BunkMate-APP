@@ -241,11 +241,6 @@ export default function AnalyticsScreen() {
     0
   );
 
-  // console.log("Labels:", WEEK_LABELS);
-  // console.log("Values:", WEEK_VALUES);
-  // console.log("Today:", new Date().toString());
-  //console.log("Today ISO:", new Date().toISOString().split("T")[0]);
-
   const overallAttendance =
     totalPresent + totalAbsent === 0
       ? 0

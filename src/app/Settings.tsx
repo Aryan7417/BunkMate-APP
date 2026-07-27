@@ -1,9 +1,4 @@
-// app/settings.tsx
-// Converted 1:1 from code.html. Drop this file into your Expo Router `app/`
-// folder as-is. Reached via the gear icon on your other screens, e.g.:
-//   import { useRouter } from 'expo-router';
-//   const router = useRouter();
-//   <Pressable onPress={() => router.push('/settings')}>...gear icon...</Pressable>
+
 
 import React, { useState } from 'react';
 import {
@@ -35,7 +30,7 @@ export default function SettingsScreen() {
   const [vibration, setVibration] = useState(true);
   const [repeatReminders, setRepeatReminders] = useState(false);
 
- 
+
   const [fontScale, setFontScale] = useState(2); // 1=Small, 2=Default, 3=Large
 
   const handleExportData = () => {
@@ -113,7 +108,7 @@ export default function SettingsScreen() {
             title="Dark Mode"
             subtitle="Minimalist monochrome"
             showDivider
-            control={<Toggle value={true} onValueChange={() => {}} disabled />}
+            control={<Toggle value={true} onValueChange={() => { }} disabled />}
           />
 
           <View style={{ paddingTop: spacing.md }}>

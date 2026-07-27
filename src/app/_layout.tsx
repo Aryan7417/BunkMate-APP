@@ -10,10 +10,7 @@ import { Platform } from "react-native";
 
 export default function RootLayout() {
 
-  // useEffect(() => {
-  //   initDatabase();
-  //   //console.log("DATBASE")
-  // }, []);
+  
   useEffect(() => {
   initDatabase();
 
