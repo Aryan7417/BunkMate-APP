@@ -1,6 +1,21 @@
 
 
-import React, { createContext, useContext, useState } from "react";
+// import React, { createContext, useContext, useState } from "react";
+// import { addSubjectToDB } from "@/storage/Database";
+
+
+import React, { createContext, useContext, useState, useEffect } from "react";
+
+import {
+  addSubjectToDB,
+  getSubjectsFromDB,
+  deleteSubjectFromDB,
+  updateSubjectInDB,
+  markPresentInDB,
+  markAbsentInDB,
+} from "@/storage/Database";
+
+
 
 export interface TimetableEntry {
   id: string;
@@ -34,6 +49,7 @@ const TimetableContext = createContext<TimetableContextType | undefined>(
 
 
 
+
 export const TimetableProvider = ({
   children,
 }: {
@@ -48,33 +64,87 @@ export const TimetableProvider = ({
     Sat: [],
   });
 
+
+  useEffect(() => {
+    const rows: any[] = getSubjectsFromDB();
+
+    const loadedSchedule: ScheduleType = {
+      Mon: [],
+      Tue: [],
+      Wed: [],
+      Thu: [],
+      Fri: [],
+      Sat: [],
+    };
+
+    rows.forEach((item) => {
+      loadedSchedule[item.day].push({
+        id: item.id,
+        name: item.name,
+        room: item.room,
+        time: item.time,
+        timeRange: item.timeRange,
+        period: item.period,
+        present: item.present,
+        absent: item.absent,
+        target: item.target,
+      });
+    });
+
+    setSchedule(loadedSchedule);
+
+    console.log("Loaded from DB:", loadedSchedule);
+  }, []);
+
+
+
   const addSubject = (day: string, subject: TimetableEntry) => {
+    // SQLite me save karo
+    addSubjectToDB(subject, day);
+
+    // UI update karo
     setSchedule((prev) => ({
       ...prev,
       [day]: [...(prev[day] || []), subject],
     }));
   };
 
+
+
+
+
+
   
 
   const deleteSubject = (day: string, id: string) => {
-    setSchedule((prev) => ({
-      ...prev,
-      [day]: (prev[day] || []).filter((item) => item.id !== id),
-    }));
-  };
+  // SQLite se delete
+  deleteSubjectFromDB(id);
+
+  // UI update
+  setSchedule((prev) => ({
+    ...prev,
+    [day]: (prev[day] || []).filter((item) => item.id !== id),
+  }));
+};
+
 
   const updateSubject = (day: string, updatedSubject: TimetableEntry) => {
-    setSchedule((prev) => ({
-      ...prev,
-      [day]: prev[day].map((item) =>
-        item.id === updatedSubject.id ? updatedSubject : item
-      ),
-    }));
-  };
+  // SQLite update
+  updateSubjectInDB(updatedSubject, day);
 
+  // UI update
+  setSchedule((prev) => ({
+    ...prev,
+    [day]: prev[day].map((item) =>
+      item.id === updatedSubject.id ? updatedSubject : item
+    ),
+  }));
+};
 
+ 
   const markPresent = (id: string) => {
+  markPresentInDB(id);
+
   setSchedule((prev) => {
     const updated = { ...prev };
 
@@ -93,7 +163,12 @@ export const TimetableProvider = ({
   });
 };
 
-const markAbsent = (id: string) => {
+  
+
+
+  const markAbsent = (id: string) => {
+  markAbsentInDB(id);
+
   setSchedule((prev) => {
     const updated = { ...prev };
 
@@ -111,6 +186,8 @@ const markAbsent = (id: string) => {
     return updated;
   });
 };
+
+
   return (
     <TimetableContext.Provider
       value={{

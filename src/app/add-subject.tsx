@@ -14,6 +14,9 @@ import { useRouter ,useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTimetable } from "../context/TimetableContext.tsx";
+import {
+  addSubjectToDB,
+} from "@/storage/Database";
 
 
 
