@@ -18,6 +18,7 @@ import {
   addSubjectToDB,
 } from "@/storage/Database";
 
+import { scheduleClassNotification } from "@/notifications/NotificationService";
 
 
 
@@ -62,7 +63,7 @@ useEffect(() => {
   }
 }, []);
 
-const handleSave = () => {
+const handleSave =async () => {
 
  // console.log("Selected Day:", day);
 //consol.log("Before Save:", schedule);
@@ -102,6 +103,17 @@ if (params.id) {
       target: 75,
     });
   }
+
+  const classTime = new Date();
+
+// Abhi ke liye testing: 1 minute baad notification
+classTime.setMinutes(classTime.getMinutes() + 1);
+
+await scheduleClassNotification(
+  subject,
+  roomNo,
+  classTime
+);
 
   router.back();
 };
