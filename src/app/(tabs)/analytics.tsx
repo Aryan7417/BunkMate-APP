@@ -5,10 +5,13 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, typography, spacing, radius, cardShadow } from '../../../themes';
+import { useTimetable } from "../../context/TimetableContext.tsx";
+import { getAttendanceHistory } from "../../storage/Database";
+
 
 // ---- Mock data — replace with your real analytics data source ----
 const WEEK_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const WEEK_VALUES = [25, 55, 45, 80, 60, 90]; // percent, 0-100
+
 
 interface SubjectPerf {
   id: string;
@@ -16,12 +19,7 @@ interface SubjectPerf {
   percent: number;
 }
 
-const SUBJECT_PERFORMANCE: SubjectPerf[] = [
-  { id: '1', name: 'Data Structures', percent: 85 },
-  { id: '2', name: 'Algorithms', percent: 62 },
-  { id: '3', name: 'Operating Systems', percent: 45 },
-  { id: '4', name: 'Database Systems', percent: 92 },
-];
+
 
 type DayMark = 'present' | 'bunked' | null;
 
@@ -42,15 +40,25 @@ const MOCK_MARKS: Record<string, DayMark> = {};
 })();
 
 // ---- Weekly line chart (SVG) ----
-function WeeklyChart() {
+function WeeklyChart({ values }: { values: number[] }) {
   const width = 300;
   const height = 140;
+  const chartHeight = height - 20;
   const paddingX = 12;
-  const stepX = (width - paddingX * 2) / (WEEK_VALUES.length - 1);
+  // const stepX = (width - paddingX * 2) / (WEEK_VALUES.length - 1);
+  const stepX = (width - paddingX * 2) / (values.length - 1);
 
-  const points = WEEK_VALUES.map((v, i) => {
+  //const points = WEEK_VALUES.map((v, i) => {
+  // const points = values.map((v, i) => {
+  //   const x = paddingX + i * stepX;
+  //   const y = height - (v / 100) * height;
+  //   return { x, y };
+  // });
+  const points = values.map((v, i) => {
     const x = paddingX + i * stepX;
-    const y = height - (v / 100) * height;
+
+    const y = chartHeight - (v / 100) * chartHeight + 10;
+
     return { x, y };
   });
 
@@ -175,12 +183,94 @@ function CalendarGrid({ monthOffset }: { monthOffset: number }) {
 }
 
 export default function AnalyticsScreen() {
+
+  const history = getAttendanceHistory();
+  // console.log("Attendance History:", history);
+
+  const { schedule } = useTimetable();
+  const subjects = Object.values(schedule).flat();
   const router = useRouter();
   const [monthOffset, setMonthOffset] = useState(0);
 
   const today = new Date();
   const viewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
   const monthLabel = viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+  const WEEK_LABELS = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (5 - index));
+
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+    });
+  });
+
+
+
+
+
+  const WEEK_VALUES = WEEK_LABELS.map((_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (5 - index));
+
+    //const day = date.toISOString().split("T")[0]
+    // ;
+    const day =
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+    const dayHistory = history.filter((item: any) => item.date === day);
+
+    if (dayHistory.length === 0) return 0;
+
+    const present = dayHistory.filter(
+      (item: any) => item.status === "present"
+    ).length;
+
+    return Math.round((present / dayHistory.length) * 100);
+  });
+  console.log("Week Values:", WEEK_VALUES);
+  const totalSubjects = subjects.length;
+
+  const totalPresent = subjects.reduce(
+    (sum, subject) => sum + subject.present,
+    0
+  );
+
+  const totalAbsent = subjects.reduce(
+    (sum, subject) => sum + subject.absent,
+    0
+  );
+
+  // console.log("Labels:", WEEK_LABELS);
+  // console.log("Values:", WEEK_VALUES);
+  // console.log("Today:", new Date().toString());
+  //console.log("Today ISO:", new Date().toISOString().split("T")[0]);
+
+  const overallAttendance =
+    totalPresent + totalAbsent === 0
+      ? 0
+      : Math.round(
+        (totalPresent / (totalPresent + totalAbsent)) * 100
+      );
+
+
+
+
+
+  const SUBJECT_PERFORMANCE: SubjectPerf[] = subjects.map((subject) => ({
+    id: subject.id,
+    name: subject.name,
+    percent:
+      subject.present + subject.absent === 0
+        ? 0
+        : Math.round(
+          (subject.present /
+            (subject.present + subject.absent)) *
+          100
+        ),
+  }));
+
+
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -199,6 +289,105 @@ export default function AnalyticsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+
+        <View style={styles.card}>
+          <Text
+            style={[
+              typography.headlineMd,
+              { color: colors.primary, marginBottom: spacing.md },
+            ]}
+          >
+            Overview
+          </Text>
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+            }}
+          >
+            <View style={{ width: "48%", marginBottom: 15 }}>
+              <Text
+                style={[
+                  typography.labelSm,
+                  { color: colors.secondaryText },
+                ]}
+              >
+                Overall Attendance
+              </Text>
+
+              <Text
+                style={[
+                  typography.headlineLgMobile,
+                  { color: colors.primary },
+                ]}
+              >
+                {overallAttendance}%
+              </Text>
+            </View>
+
+            <View style={{ width: "48%", marginBottom: 15 }}>
+              <Text
+                style={[
+                  typography.labelSm,
+                  { color: colors.secondaryText },
+                ]}
+              >
+                Subjects
+              </Text>
+
+              <Text
+                style={[
+                  typography.headlineLgMobile,
+                  { color: colors.primary },
+                ]}
+              >
+                {totalSubjects}
+              </Text>
+            </View>
+
+            <View style={{ width: "48%" }}>
+              <Text
+                style={[
+                  typography.labelSm,
+                  { color: colors.secondaryText },
+                ]}
+              >
+                Present
+              </Text>
+
+              <Text
+                style={[
+                  typography.headlineLgMobile,
+                  { color: "#22c55e" },
+                ]}
+              >
+                {totalPresent}
+              </Text>
+            </View>
+
+            <View style={{ width: "48%" }}>
+              <Text
+                style={[
+                  typography.labelSm,
+                  { color: colors.secondaryText },
+                ]}
+              >
+                Absent
+              </Text>
+
+              <Text
+                style={[
+                  typography.headlineLgMobile,
+                  { color: "#ef4444" },
+                ]}
+              >
+                {totalAbsent}
+              </Text>
+            </View>
+          </View>
+        </View>
         {/* Weekly Attendance */}
         <View style={styles.card}>
           <View style={styles.cardTopRow}>
@@ -210,7 +399,8 @@ export default function AnalyticsScreen() {
             </View>
           </View>
           <View style={{ marginTop: spacing.md }}>
-            <WeeklyChart />
+            {/* <WeeklyChart /> */}
+            <WeeklyChart values={WEEK_VALUES} />
           </View>
         </View>
 

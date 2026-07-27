@@ -93,7 +93,7 @@ export const TimetableProvider = ({
 
     setSchedule(loadedSchedule);
 
-    console.log("Loaded from DB:", loadedSchedule);
+    //console.log("Loaded from DB:", loadedSchedule);
   }, []);
 
 

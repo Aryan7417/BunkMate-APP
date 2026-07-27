@@ -10,7 +10,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     initDatabase();
-    console.log("DATBASE")
+    //console.log("DATBASE")
   }, []);
 
 

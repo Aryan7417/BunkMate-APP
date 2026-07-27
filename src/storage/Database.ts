@@ -3,6 +3,33 @@ import * as SQLite from "expo-sqlite";
 
 export const db = SQLite.openDatabaseSync("bunkmate.db");
 
+// export function initDatabase() {
+//   db.execSync(`
+//     CREATE TABLE IF NOT EXISTS subjects (
+//       id TEXT PRIMARY KEY NOT NULL,
+//       name TEXT NOT NULL,
+//       day TEXT NOT NULL,
+//       room TEXT,
+//       time TEXT,
+//       timeRange TEXT,
+//       period TEXT,
+//       present INTEGER DEFAULT 0,
+//       absent INTEGER DEFAULT 0,
+//       target INTEGER DEFAULT 75
+//     );
+//   `);
+
+//   db.execSync(`
+//   CREATE TABLE IF NOT EXISTS attendance_history (
+//     id INTEGER PRIMARY KEY AUTOINCREMENT,
+//     subjectId TEXT NOT NULL,
+//     date TEXT NOT NULL,
+//     status TEXT NOT NULL
+//   );
+// `);
+
+
+// }
 export function initDatabase() {
   db.execSync(`
     CREATE TABLE IF NOT EXISTS subjects (
@@ -16,6 +43,13 @@ export function initDatabase() {
       present INTEGER DEFAULT 0,
       absent INTEGER DEFAULT 0,
       target INTEGER DEFAULT 75
+    );
+
+    CREATE TABLE IF NOT EXISTS attendance_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      subjectId TEXT NOT NULL,
+      date TEXT NOT NULL,
+      status TEXT NOT NULL
     );
   `);
 }
@@ -46,13 +80,13 @@ export function addSubjectToDB(subject: TimetableEntry, day: string) {
       ]
     );
 
-    console.log("✅ Saved to SQLite");
+   // console.log("✅ Saved to SQLite");
 
     const rows = db.getAllSync("SELECT * FROM subjects");
-    console.log("📦 Database:", rows);
+   // console.log("📦 Database:", rows);
 
   } catch (e) {
-    console.error("❌ SQLite Error:", e);
+   // console.error("❌ SQLite Error:", e);
   }
 }
 
@@ -64,7 +98,7 @@ export function deleteSubjectFromDB(id: string) {
     [id]
   );
 
-  console.log("🗑️ Deleted:", id);
+ // console.log("🗑️ Deleted:", id);
 }
 
 
@@ -97,9 +131,18 @@ export function updateSubjectInDB(subject: TimetableEntry, day: string) {
     ]
   );
 
-  console.log("✏️ Updated:", subject.id);
+ // console.log("✏️ Updated:", subject.id);
 }
 
+
+// export function markPresentInDB(id: string) {
+//   db.runSync(
+//     `UPDATE subjects
+//      SET present = present + 1
+//      WHERE id = ?`,
+//     [id]
+//   );
+// }
 
 export function markPresentInDB(id: string) {
   db.runSync(
@@ -108,7 +151,20 @@ export function markPresentInDB(id: string) {
      WHERE id = ?`,
     [id]
   );
+
+  addAttendanceHistory(id, "present");
 }
+
+
+
+// export function markAbsentInDB(id: string) {
+//   db.runSync(
+//     `UPDATE subjects
+//      SET absent = absent + 1
+//      WHERE id = ?`,
+//     [id]
+//   );
+// }
 
 export function markAbsentInDB(id: string) {
   db.runSync(
@@ -116,5 +172,54 @@ export function markAbsentInDB(id: string) {
      SET absent = absent + 1
      WHERE id = ?`,
     [id]
+  );
+
+  addAttendanceHistory(id, "absent");
+}
+
+
+
+
+// export function addAttendanceHistory(
+//   subjectId: string,
+//   status: "present" | "absent"
+// ) {
+//   // const today = new Date().toISOString().split("T")[0];
+//   const today = new Date().toLocaleDateString("en-CA");
+//   const localDate =
+//   `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+// console.log("Local Date:", localDate);
+
+//   db.runSync(
+//     `INSERT INTO attendance_history (subjectId, date, status)
+//      VALUES (?, ?, ?)`,
+//     [subjectId, today, status]
+//   );
+// }
+
+
+export function addAttendanceHistory(
+  subjectId: string,
+  status: "present" | "absent"
+) {
+  const now = new Date();
+
+  const today =
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  console.log("Saving Date:", today);
+
+  db.runSync(
+    `INSERT INTO attendance_history (subjectId, date, status)
+     VALUES (?, ?, ?)`,
+    [subjectId, today, status]
+  );
+}
+
+
+export function getAttendanceHistory() {
+  return db.getAllSync(
+    `SELECT * FROM attendance_history ORDER BY date ASC`
   );
 }

@@ -64,8 +64,8 @@ useEffect(() => {
 
 const handleSave = () => {
 
-  console.log("Selected Day:", day);
-console.log("Before Save:", schedule);
+ // console.log("Selected Day:", day);
+//consol.log("Before Save:", schedule);
 
   if (!isValid) {
     Alert.alert(
@@ -87,7 +87,7 @@ if (params.id) {
       absent: 0,
       target: 75,
     });
-    console.log("Selected Day:", day);
+    //console.log("Selected Day:", day);
 
   } else {
     addSubject(day, {
@@ -217,7 +217,7 @@ if (params.id) {
         <View style={styles.footer}>
           <Pressable
   onPress={() => {
-    console.warn("Button Clicked");
+    //console.warn("Button Clicked");
     handleSave();
   }}
   style={({ pressed }) => [
